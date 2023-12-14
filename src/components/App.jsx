@@ -1,8 +1,7 @@
 import shortid from 'shortid';
-import { Oval } from 'react-loader-spinner';
-import { fetchPhoto } from '../api';
-import {LoaderWrapper} from "./App.styled"
 import { Component } from 'react';
+import { fetchPhoto } from '../api';
+import { Loader } from './Loader/Loader';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
@@ -63,20 +62,7 @@ export class App extends Component {
         <Searchbar onSubmit={this.handleSubmit} />
         <ImageGallery images={images} />
         {isLoading && (
-          <LoaderWrapper>
-            <Oval
-              height={180}
-              width={180}
-              color="#2196f3"
-              wrapperStyle={{}}
-              wrapperClass=""
-              visible={true}
-              ariaLabel="oval-loading"
-              secondaryColor="#2196f3"
-              strokeWidth={4}
-              strokeWidthSecondary={2}
-            />
-          </LoaderWrapper>
+          <Loader/>
         )}
         {images.length > 0 && images.length % 12 === 0 && (
           <Button onLoadMore={this.handleLoadMore} />
