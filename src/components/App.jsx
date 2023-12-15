@@ -1,73 +1,69 @@
 import shortid from 'shortid';
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchPhoto } from '../api';
 import { Loader } from './Loader/Loader';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 
-export class App extends Component {
-  state = {
-    images: [],
-    query: '',
-    page: 1,
-    isLoading: false,
-  };
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
+  useEffect(() => {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
 
-    const queryCut = query.split('//');
-    const querywithOutId = queryCut[1];
+    async function feathImages() {
+      const queryCut = query.split('//');
+      const querywithOutId = queryCut[1];
 
-    if (prevState.query !== query || prevState.page !== page) {
+      if (query === '') {
+        return;
+      }
+
       try {
-        this.setState({ isLoading: true });
-        const addPhoto = await fetchPhoto(querywithOutId, page);
-        this.setState(prevState => {
-          return {
-            images: [...prevState.images, ...addPhoto.hits],
-          };
+        setIsLoading(true);
+        const addPhoto = await fetchPhoto(querywithOutId, page, { signal });
+        setImages(prevImages => {
+          return [...prevImages, ...addPhoto.hits];
         });
       } catch (error) {
-        console.log('error');
+        if (error.code !== 'ERR_CANCELED') {
+          console.log(error);
+        }
       } finally {
-        this.setState({ isLoading: false });
+        setIsLoading(false);
       }
     }
-  }
 
-  // updateInput(newString) {
-  //   console.log("newString", newString);
-  // }
+    feathImages();
 
-  handleSubmit = newQuery => {
-    this.setState({
-      query: `${shortid.generate()}//${newQuery}`,
-      page: 1,
-      images: [],
-    });
+    return () => {
+      abortController.abort();
+    };
+  }, [query, page]);
+
+  const handleSubmit = newQuery => {
+    setQuery(`${shortid.generate()}//${newQuery}`);
+    setPage(1);
+    setImages([]);
   };
 
-  handleLoadMore = () => {
-    this.setState(prevState => {
-      return { page: prevState.page + 1 };
-    });
+  const handleLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  render() {
-    const { images, isLoading } = this.state;
-    return (
-      <>
-        <Searchbar onSubmit={this.handleSubmit} />
-        <ImageGallery images={images} />
-        {isLoading && (
-          <Loader/>
-        )}
-        {images.length > 0 && images.length % 12 === 0 && (
-          <Button onLoadMore={this.handleLoadMore} />
-        )}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <Searchbar onSubmit={handleSubmit} />
+      <ImageGallery images={images} />
+      {isLoading && <Loader />}
+      {images.length > 0 && images.length % 12 === 0 && (
+        <Button onLoadMore={handleLoadMore} />
+      )}
+    </>
+  );
+};

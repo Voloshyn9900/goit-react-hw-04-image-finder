@@ -7,7 +7,7 @@ export const ImageGallery = ({ images }) => {
   return (
     <Gallery>
       {images.map(image => {
-      console.log(image.id);
+      console.log(images.indexOf(image), ' ', image.id);
         return <ImageGalleryItem key={image.id} image={image} />;
       })}
     </Gallery>
